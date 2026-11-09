@@ -1,0 +1,39 @@
+"""CryptoRates — курсы криптовалют из открытого API CoinGecko.
+Криптовалюта и базовая валюта выбираются выпадающими списками.
+"""
+import tkinter as tk
+from tkinter import *
+from tkinter import messagebox as mb
+from tkinter import ttk
+import requests
+
+API_URL = "https://api.coingecko.com/api/v3/simple/price"
+
+# Список криптовалют
+crypto = {
+    "bitcoin":   ("Bitcoin",   "BTC"),
+    "ethereum":  ("Ethereum",  "ETH"),
+    "tether":    ("Tether",    "USDT"),
+    "solana":    ("Solana",    "SOL"),
+    "dogecoin":  ("Dogecoin",  "DOGE"),
+}
+
+# Список валют
+currencies = {
+    "usd": ("Доллар США (USD)", "$"),
+    "eur": ("Евро (EUR)", "€"),
+    "rub": ("Рубль (RUB)", "₽"),
+    "gbp": ("Фунт (GBP)", "£"),
+    "jpy": ("Иена (JPY)", "¥"),
+}
+
+
+# Основное окно приложения
+image = 'image.ico'
+window = Tk()
+window.title("Курс криптовалют")
+window.geometry("420x320")
+window.iconbitmap(image)
+window.config(bg='light blue')
+
+window.mainloop()
