@@ -10,6 +10,8 @@ import requests
 API_URL = "https://api.coingecko.com/api/v3/simple/price"
 
 # Список криптовалют
+# Можно получить список через API https://api.coingecko.com/api/v3/coins/list
+# Выбраны наиболее известные
 crypto = {
     "bitcoin":   ("Bitcoin",   "BTC"),
     "ethereum":  ("Ethereum",  "ETH"),
@@ -19,6 +21,8 @@ crypto = {
 }
 
 # Список валют
+# Можно получить список через API https://api.coingecko.com/api/v3/simple/supported_vs_currencies
+# Выбраны наиболее известные
 currencies = {
     "usd": ("Доллар США (USD)", "$"),
     "eur": ("Евро (EUR)", "€"),
@@ -26,6 +30,23 @@ currencies = {
     "gbp": ("Фунт (GBP)", "£"),
     "jpy": ("Иена (JPY)", "¥"),
 }
+
+
+def add_combobox(main_window, title, values, event_func):
+    # Функция вывода блока интерфейсных элементов: список валют, его наименование и текущее значение
+    # Наименование списка
+    label = Label(main_window, text=title, font='Arial, 15', justify=CENTER)
+    label.config(bg='light blue', fg='dark blue')
+    label.pack(pady=5)
+    # Список значений
+    combobox = ttk.Combobox(main_window, values=list(values.keys()), state='readonly')
+    combobox.pack(pady=3, padx=10)
+    # Текстовое описание значения
+    combo_label = tk.Label(main_window, text="", bg='light blue')
+    combo_label.pack()
+    # Обновление описания при смене значения
+    combobox.bind('<<ComboboxSelected>>', event_func)
+    return combobox, combo_label
 
 
 def update_crypto_label(event):
@@ -40,6 +61,37 @@ def update_currency_label(event):
     currency_label.config(text=currencies[code][0])
 
 
+def exchange():
+    # Функция получения и вывода курса криптовалюты
+    crypto_code = crypto_combobox.get().strip()     # криптовалюта, напр. bitcoin
+    currency_code = currency_combobox.get().strip() # валюта, напр. usd
+    # Проверяем, что обе валюты заданы
+    if not crypto_code or not currency_code:
+        mb.showwarning('Внимание', 'Выберите обе валюты')
+        return
+
+    try:
+        response = requests.get(API_URL, params={
+            "ids": crypto_code,             # id криптовалюты
+            "vs_currencies": currency_code, # базовая валюта
+        }, timeout=10)
+        response.raise_for_status()
+        data = response.json()             # ожидаемый формат {"bitcoin": {"usd": 68250.5}}
+
+        if crypto_code in data and currency_code in data[crypto_code]:
+            # Выбранные криптовалюта и валюта есть в ответе
+            rate = data[crypto_code][currency_code]
+            _, crypto_name = crypto[crypto_code]
+            currency_name, currency_symbol = currencies[currency_code]
+            mb.showinfo('Курс обмена',
+                        f'1 {crypto_name} = {currency_symbol}{rate:,.2f} ({currency_name})')
+        else:
+            mb.showerror('Ошибка', f'Курс для {crypto_code} не найден')
+    except requests.exceptions.HTTPError as e:
+        mb.showerror('Ошибка', f'Ошибка сервера: HTTP {e.response.status_code}')
+    except requests.exceptions.RequestException:
+        mb.showerror('Ошибка', 'Нет соединения с api.coingecko.com')
+
 # Основное окно приложения
 image = 'image.ico'
 window = Tk()
@@ -48,24 +100,13 @@ window.geometry("420x320")
 window.iconbitmap(image)
 window.config(bg='light blue')
 
-n1 = Label(window, text='Базовая валюта', font='Arial, 15', justify=CENTER)
-n1.config(bg='light blue', fg='dark blue')
-n1.pack(pady=5)
-currency_combobox = ttk.Combobox(window, values=list(currencies.keys()),
-                             state='readonly')
-currency_combobox.pack(pady=3, padx=10)
-currency_combobox.bind('<<ComboboxSelected>>', update_currency_label)
-currency_label = tk.Label(window, text="", bg='light blue')
-currency_label.pack()
+# Выводим блок элементов валют
+currency_combobox, currency_label = add_combobox(window, 'Базовая валюта', currencies, update_currency_label)
+# Выводим блок элементов криптовалют
+crypto_combobox, crypto_label = add_combobox(window, 'Криптовалюта', crypto, update_crypto_label)
 
-n2 = Label(window, text='Криптовалюта', font='Arial, 15',justify=CENTER)
-n2.config(bg='light blue', fg='dark blue')
-n2.pack(pady=5)
-crypto_combobox = ttk.Combobox(window, values=list(crypto.keys()),
-                               state='readonly')
-crypto_combobox.pack(pady=3, padx=10)
-crypto_combobox.bind('<<ComboboxSelected>>', update_crypto_label)
-crypto_label = tk.Label(window, text="", bg='light blue')
-crypto_label.pack()
+# Кнопка получения курса
+Button(window, text='Получить курс обмена', font='Arial, 12', bg='dark blue', fg='white',
+       command=exchange).pack(pady=10, padx=10)
 
 window.mainloop()
