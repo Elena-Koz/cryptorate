@@ -28,6 +28,18 @@ currencies = {
 }
 
 
+def update_crypto_label(event):
+    """Смена названия криптовалюты при выборе в списке."""
+    code = crypto_combobox.get()
+    crypto_label.config(text=crypto[code][0])
+
+
+def update_currency_label(event):
+    """Смена названия базовой валюты при выборе в списке."""
+    code = currency_combobox.get()
+    currency_label.config(text=currencies[code][0])
+
+
 # Основное окно приложения
 image = 'image.ico'
 window = Tk()
@@ -35,5 +47,25 @@ window.title("Курс криптовалют")
 window.geometry("420x320")
 window.iconbitmap(image)
 window.config(bg='light blue')
+
+n1 = Label(window, text='Базовая валюта', font='Arial, 15', justify=CENTER)
+n1.config(bg='light blue', fg='dark blue')
+n1.pack(pady=5)
+currency_combobox = ttk.Combobox(window, values=list(currencies.keys()),
+                             state='readonly')
+currency_combobox.pack(pady=3, padx=10)
+currency_combobox.bind('<<ComboboxSelected>>', update_currency_label)
+currency_label = tk.Label(window, text="", bg='light blue')
+currency_label.pack()
+
+n2 = Label(window, text='Криптовалюта', font='Arial, 15',justify=CENTER)
+n2.config(bg='light blue', fg='dark blue')
+n2.pack(pady=5)
+crypto_combobox = ttk.Combobox(window, values=list(crypto.keys()),
+                               state='readonly')
+crypto_combobox.pack(pady=3, padx=10)
+crypto_combobox.bind('<<ComboboxSelected>>', update_crypto_label)
+crypto_label = tk.Label(window, text="", bg='light blue')
+crypto_label.pack()
 
 window.mainloop()
